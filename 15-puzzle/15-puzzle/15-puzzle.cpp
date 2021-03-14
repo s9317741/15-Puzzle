@@ -20,21 +20,18 @@ enum Direction { UP, DOWN, LEFT, RIGHT };
 
 std::vector<char> path;
 
-int puzzle[16] = { 1,11,9,13,8,10,15,3,6,14,12,4,0,7,5,2 };
-int puzzle_pos[16] = { 0 };
+int puzzle[16];
 
-void GetPosition(int puzzle[16])
-{
-	for (int i = 0; i < 16; i++)
-		puzzle_pos[puzzle[i]] = i;
-}
-/*
 void RandomPuzzle()
 {
-	for (int i = 0; i < 16; i++)
+	int num = rand() % 4;
+	switch (num)
 	{
-		int j = i + rand() % (16 - i);
-		SWAP(puzzle[i], puzzle[j]);
+	case 0:
+		puzzle[16] = { 0,4,2,3,13,8,7,6,5,10,11,1,9,12,15,14 };
+		break;
+	default:
+		break;
 	}
 	for (int i = 0; i < 16; i++)
 	{
@@ -43,7 +40,7 @@ void RandomPuzzle()
 		else
 			printf("%2d ", puzzle[i]);
 	}
-}*/
+}
 
 //compare current position with final position
 //h(P) : the Manhattan distance between the current and the goal
