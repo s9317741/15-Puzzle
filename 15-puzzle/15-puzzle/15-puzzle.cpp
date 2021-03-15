@@ -16,11 +16,12 @@ typedef struct Node {
 	int action; 
 	int pathCost; 
 	int depth;
-}node;
+};
 
-enum Direction { UP, DOWN, LEFT, RIGHT };
-
+//UP, DOWN, LEFT, RIGHT
 int dir[4] = { -4, +4, -1, +1 };
+
+char dir_s[4][10] = { "Up", "Down", "Left", "Right" };
 
 std::vector<char> path;
 
@@ -115,21 +116,29 @@ void printBoard(int board[16])
 	}
 }
 
-void printPath(Node* root)
+void printPath(Node* node)
 {
-	if (root == NULL)
+	if (node == NULL)
 		return;
-	printPath(root->parent);
-	printBoard(root->board);
+	printPath(node->parent);
+	printBoard(node->board);
 
 	printf("\n");
 }
-//UP:0, DOWN:1, left:2, right:3
-bool isLegal(int pos, int dir)
+
+int FindBlankPos()
 {
-	if ((pos + dir) < 0 || (pos + dir) > 15) return false;
-	if ((pos % 4 == 0 && dir == 2) || (pos / 4 == 0 && dir == 0)
-		|| (pos % 4 == 3 && dir == 3) || (pos / 4 == 3 && dir == 1))
+	for (int i = 0; i < 16; i++)
+		if (puzzle[i] == 0)
+			return i;
+}
+
+//UP:0, DOWN:1, left:2, right:3
+bool isLegal(int pos, int direction)
+{
+	if ((pos + dir[direction]) < 0 || (pos + dir[direction]) > 15) return false;
+	if ((pos % 4 == 0 && direction == 2) || (pos / 4 == 0 && direction == 0)
+		|| (pos % 4 == 3 && direction == 3) || (pos / 4 == 3 && direction == 1))
 		return false;
 	return true;
 }
@@ -139,103 +148,60 @@ bool dfs(Node *node, int g, int threshold)
 	//Evaluation value h, f() = g + h
 	int h = manhattanDistance(node->board);
 	//Find the final answer
-	if (h == 0) return true;
+	if (h == 0) 
+	{
+		printPath(node);
+		return true;
+	}
 	//Pruning
 	int f = g + h;
 	if (f > threshold) return false; //update threshold
+	Node *child = new Node();
 	for (int i = 0; i < 4; i++)
 	{
-		if ((node->action ^ 1) != i && isLegal(node->pos, dir[i]))
+		if (node->action == NULL || (dir[node->action] != (-dir[i]) && isLegal(node->pos, i)))
 		{
 			path.push_back(i);
-			Node *child = newNode(node->board, node, node->pos, node->pos + dir[i], i, node->depth + 1);
+			child = newNode(node->board, node, node->pos, node->pos + dir[i], i, node->depth + 1);
 			if (dfs(child, g + 1, threshold)) return true;
-			path.push_back(i);
-			delete(child);
+			path.pop_back();
 		}
 	}
+	delete(child);
 	return false;
 }
-/*
-void dfs(int board[16])
-{
-	//Evaluation value h, f() = g + h
-	int h = manhattanDistance(node->board);
-	//Find the final answer
-	if (h == 0) return FOUND;
-	//Pruning
-	int f = g + h;
-	if (f > threshold) return f; //update threshold
-	int pos;
-	for (int i = 0; i < 16; i++)
-	{
-		if (board[i] == 0)
-		{
-			pos = i;
-			break;
-		}
-	}
-		
-
-	std::stack<Node*> _stack;
-	Node* root = newNode(board, NULL, pos, pos, NULL, 0);
-	_stack.push(root);
-	while (!_stack.empty())
-	{
-		Node *cur = _stack.top();
-		_stack.pop();
-
-		if (cur->pathCost == 0)
-		{
-			printPath(cur);
-			//return FOUND;
-			return;
-		}
-
-		for (int i = 0; i < 4; i++)
-		{
-			if (cur->action != i && isLegal(cur->pos, dir[i]))
-			{
-				Node *child = newNode(cur->board, cur, cur->pos, cur->pos + dir[i], i, cur->depth+1);
-
-				child->pathCost = manhattanDistance(child->board);
-				_stack.push(child);
-			}
-		}
-	}
-	//return 0;
-}*/
-
 
 //g(P) : the number of moves made so far.
-bool idaStar()
+bool idaStar(int pos)
 {
-	int pos;
-	for (int i = 0; i < 16; i++)
-	{
-		if (puzzle[i] == 0)
-		{
-			pos = i;
-			break;
-		}
-	}
-	Node *root = newNode(puzzle, NULL, pos, pos, NULL, 0);;
+	Node *root = newNode(puzzle, NULL, pos, pos, NULL, 0);
 	int threshold = manhattanDistance(root->board);
+	clock_t start = clock();
 	while (true)
 	{
-		//int result = dfs(node, 0, threshold);
-		//if (result == FOUND) return true;
 		if (dfs(root, 0, threshold)) return true;
-		//threshold = result;
 	}
+	clock_t end = clock();
 	return false;
 }
 
 int main()
 {
 	srand(time(NULL));
-	RandomPuzzle();
-	//printBoard(puzzle);	
-	idaStar();
-	//dfs(puzzle);
+	//RandomPuzzle();	
+	//{ 5,1,0,4,7,6,2,3,9,10,12,8,13,14,11,15 }	
+	//{ 6, 1, 7, 4, 5, 3, 11, 8, 2, 14, 12, 15, 9, 10, 13, 0 }
+	int temp[16] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
+	memcpy(puzzle, temp, sizeof(temp));
+	printBoard(puzzle);
+	printf("\n");
+	int pos = FindBlankPos();
+	
+	if (idaStar(pos))
+	{
+		int count = 1;
+		for (int i = 0; i < path.size(); i++, count++)
+			printf("%d. %s\n", count, dir_s[path.at(i)]);
+	}
+
 }
