@@ -31,7 +31,7 @@ char dir_s[4][10] = { "Up", "Down", "Left", "Right" };
 std::vector<char> path;
 std::unordered_map<std::string, bool> h_map;
 
-int puzzle[16] = {0};
+int puzzle[16] = { 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0 };
 const int finalAnswer[16] = { 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0 };
 
 // Function to allocate a new node
@@ -60,11 +60,11 @@ Node* newNode(int *board, Node *parent, int pos, int newPos, int action, int dep
 void RandomPuzzle()
 {
 	int num = rand() % 5;
-	int temp0[16] = { 0,4,2,3,13,8,7,6,5,10,11,1,9,12,15,14 };
-	int temp1[16] = { 12,8,3,13,10,6,15,2,4,5,1,9,11,14,7,0 };
-	int temp2[16] = { 1,5,9,13,2,6,10,14,3,7,11,15,4,8,12,0 }; // difficult
-	int temp3[16] = { 0,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1 };
-	int temp4[16] = { 0,12,9,13,15,11,10,14,7,8,5,6,4,3,2,1 };
+	int temp0[16] = { 0 ,4, 2, 3, 13, 8, 7, 6, 5, 10, 11, 1, 9, 12, 15, 14 };
+	int temp1[16] = { 5, 1, 0, 4, 7, 6, 2, 3, 9, 10, 12, 8, 13, 14, 11, 15 };
+	int temp2[16] = { 6, 1, 7, 4, 5, 3, 11, 8, 2, 14, 12, 15, 9, 10, 13, 0 }; 
+	int temp3[16] = { 5, 2, 7, 4, 3, 1, 12, 0, 10, 13, 9, 6, 14, 8, 11, 15 };
+	int temp4[16] = { 8, 0, 2, 4, 5, 14, 3, 1, 9, 10, 7, 12, 13, 11, 15, 6 };
 	switch (num)
 	{
 	case 0:
@@ -93,6 +93,17 @@ void RandomPuzzle()
 		else
 			printf("%2d ", puzzle[i]);
 	}
+}
+
+void GenPuzzle()
+{
+	for (int i = 0; i < 10; i++)
+	{
+		int a = rand() % 16, b = rand() % 16;
+		SWAP(puzzle[a], puzzle[b]);
+	}
+	for (int i = 0; i < 16; i++)
+		printf("%d, ", puzzle[i]);
 }
 
 // compare current position with final position
@@ -159,7 +170,6 @@ std::string intBoardToArray(int *board)
 int dfs_r(std::stack<Node*> &stack, int g, int threshold)
 {
 	Node *node = stack.top();
-
 	// Evaluation value h, f() = g + h
 	int h = manhattanDistance(node->board);
 	// Pruning
@@ -168,7 +178,7 @@ int dfs_r(std::stack<Node*> &stack, int g, int threshold)
 	// Find the final answer
 	if (h == 0) 
 	{
-		//printPath(node);
+		printPath(node);
 		return FOUND;
 	}
 	int min = INT_MAX;
@@ -180,20 +190,20 @@ int dfs_r(std::stack<Node*> &stack, int g, int threshold)
 			Node *child = newNode(node->board, node, node->pos, (node->pos + dir[i]), i, (node->depth + 1));
 			std::string key = intBoardToArray(child->board);
 			//printf("%s\n", key);
-			/*
+			
 			if (h_map.find(key) != h_map.end()) {
 				//printf("HI\n");
 				continue;
 			}
-			h_map.insert(std::pair<std::string, bool>(key, true));*/
+			h_map.insert(std::pair<std::string, bool>(key, true));
 			path.push_back(i);		
 			stack.push(child);			
-			int result = dfs_r(stack, g + 1, threshold) ;
+			int result = dfs_r(stack, g + 1, threshold) ;			
 			if (result == FOUND) return FOUND;
-			if (result < min) min = result;
+			if (result < min) min = result;	
 			path.pop_back();
-			stack.pop();			
-		}
+			stack.pop();
+		}	
 	}
 	return min;
 }
@@ -207,9 +217,14 @@ bool idaStar(int pos)
 	stack.push(root);
 	while (true)
 	{
+		path.clear();
+		h_map.clear();
 		int result = dfs_r(stack, 0, threshold);
 		if (result == FOUND) return true;
-		if (result == INT_MAX) return false;
+		if (result == INT_MAX) {
+			printf("result == INT_MAX\n");
+			return false;
+		}
 		threshold = result;
 	}
 	return false;
@@ -231,23 +246,7 @@ int main()
 {
 	srand(time(NULL));
 	RandomPuzzle();	
-	// 5, 1, 0, 4, 7, 6, 2, 3, 9, 10, 12, 8, 13, 14, 11, 15	
-	// 6, 1, 7, 4, 5, 3, 11, 8, 2, 14, 12, 15, 9, 10, 13, 0
-	// 0, 4, 2, 3, 13, 8, 7, 6, 5, 10, 11, 1, 9, 12, 15, 14
-	/*int n;
-	scanf("%d", &n);
-	int temp1[16] = { 5, 1, 0, 4, 7, 6, 2, 3, 9, 10, 12, 8, 13, 14, 11, 15 };
-	int temp2[16] = { 6, 1, 7, 4, 5, 3, 11, 8, 2, 14, 12, 15, 9, 10, 13, 0 };
-	switch (n)
-	{
-	case 1:
-		memcpy(puzzle, temp1, sizeof(temp1));
-		break;
-	case 2:
-		memcpy(puzzle, temp2, sizeof(temp2));
-		break;
-	}*/
-	printBoard(puzzle);
+	//GenPuzzle();
 	printf("\n");
 
 	int pos = FindBlankPos(puzzle);
