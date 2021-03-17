@@ -59,12 +59,12 @@ Node* newNode(int *board, Node *parent, int pos, int newPos, int action, int dep
 
 void RandomPuzzle()
 {
-	int num = rand() % 5;
-	int temp0[16] = { 0 ,4, 2, 3, 13, 8, 7, 6, 5, 10, 11, 1, 9, 12, 15, 14 };
-	int temp1[16] = { 5, 1, 0, 4, 7, 6, 2, 3, 9, 10, 12, 8, 13, 14, 11, 15 };
-	int temp2[16] = { 6, 1, 7, 4, 5, 3, 11, 8, 2, 14, 12, 15, 9, 10, 13, 0 }; 
-	int temp3[16] = { 5, 2, 7, 4, 3, 1, 12, 0, 10, 13, 9, 6, 14, 8, 11, 15 };
-	int temp4[16] = { 8, 0, 2, 4, 5, 14, 3, 1, 9, 10, 7, 12, 13, 11, 15, 6 };
+	int num = 3;//rand() % 5;
+	int temp0[16] = { 0 ,4, 2, 3, 13, 8, 7, 6, 5, 10, 11, 1, 9, 12, 15, 14 }; //best 52
+	int temp1[16] = { 5, 1, 0, 4, 7, 6, 2, 3, 9, 10, 12, 8, 13, 14, 11, 15 }; //16
+	int temp2[16] = { 6, 1, 7, 4, 5, 3, 11, 8, 2, 14, 12, 15, 9, 10, 13, 0 }; //22
+	int temp3[16] = { 5, 2, 7, 4, 3, 1, 12, 0, 10, 13, 9, 6, 14, 8, 11, 15 }; //best 34
+	int temp4[16] = { 8, 0, 2, 4, 5, 14, 3, 1, 9, 10, 7, 12, 13, 11, 15, 6 }; //best 37
 	switch (num)
 	{
 	case 0:
@@ -161,7 +161,7 @@ std::string intBoardToArray(int *board)
 	std::string a;
 	for (int i = 0; i < 16; i++)
 	{
-		a += board[i]+'a';
+		a += board[i]+'0';
 	}
 	return a;
 }
@@ -185,7 +185,7 @@ int dfs_r(std::stack<Node*> &stack, int g, int threshold)
 
 	for (int i = 0; i < 4; i++)
 	{
-		if ((node->action == NULL || dir[node->action]+dir[i] != 0 ) && isLegal(node->pos, i))
+		if (isLegal(node->pos, i))
 		{
 			Node *child = newNode(node->board, node, node->pos, (node->pos + dir[i]), i, (node->depth + 1));
 			std::string key = intBoardToArray(child->board);
@@ -217,7 +217,6 @@ bool idaStar(int pos)
 	stack.push(root);
 	while (true)
 	{
-		path.clear();
 		h_map.clear();
 		int result = dfs_r(stack, 0, threshold);
 		if (result == FOUND) return true;
