@@ -4,7 +4,6 @@
 #include <stack>
 #include <unordered_map>
 #include <string>
-#include <sstream>
 
 #define SWAP(x, y) int tmp = x; x = y; y = tmp;
 #define SIZE 4
@@ -14,7 +13,6 @@ typedef struct Node {
 	int board[16];	// tiles position
 	Node *parent;
 	int pos;
-	int action; 
 	int depth;
 };
 
@@ -31,13 +29,13 @@ char dir_s[4][10] = { "Up", "Down", "Left", "Right" };
 std::vector<char> path;
 std::unordered_map<std::string, bool> h_map;
 
-int puzzle[16] = { 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0 };
-const int finalAnswer[16] = { 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0 };
+int puzzle[16] = { 0 };
+int finalAnswer[16] = { 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0 };
 
 // Function to allocate a new node
-Node* newNode(int *board, Node *parent, int pos, int newPos, int action, int depth)
+Node* newNode(int *board, Node *parent, int pos, int newPos, int depth)
 {
-	Node* node = new Node;
+	Node* node = new Node();
 
 	node->parent = parent;
 
@@ -52,14 +50,12 @@ Node* newNode(int *board, Node *parent, int pos, int newPos, int action, int dep
 
 	node->pos = newPos;
 
-	node->action = action;
-
 	return node;
 }
 
 void RandomPuzzle()
 {
-	int num = 3;//rand() % 5;
+	int num = 3;// rand() % 5;
 	int temp0[16] = { 0 ,4, 2, 3, 13, 8, 7, 6, 5, 10, 11, 1, 9, 12, 15, 14 }; //best 52
 	int temp1[16] = { 5, 1, 0, 4, 7, 6, 2, 3, 9, 10, 12, 8, 13, 14, 11, 15 }; //16
 	int temp2[16] = { 6, 1, 7, 4, 5, 3, 11, 8, 2, 14, 12, 15, 9, 10, 13, 0 }; //22
@@ -106,21 +102,34 @@ void GenPuzzle()
 		printf("%d, ", puzzle[i]);
 }
 
+void getBoardPosition(int *board)
+{
+	int *boardPos = new int[16];
+	for (int i = 0; i < 16; i++)
+		boardPos[board[i]] = i;
+	for (int i = 0; i < 16; i++)
+		printf("%d, ", boardPos[i]);
+
+	//return boardPos;
+}
+
 // compare current position with final position
 // h(P) : the Manhattan distance between the current and the goal
 int manhattanDistance(int *board)
 {
 	int dis = 0;
+	//int *getPos = getBoardPosition(board);
+	//int *getPos1 = getBoardPosition(finalAnswer);
 	for (int i = 0; i < 16; i++)
 	{
 		if (board[i] == 0)
 			continue;
-		dis += abs((board[i] / SIZE) - (finalAnswer[i] / SIZE)) + abs((board[i] % SIZE) - (finalAnswer[i] % SIZE));
+		dis += abs(board[i] / SIZE - finalAnswer[i] / SIZE ) + abs(board[i] % SIZE - finalAnswer[i] % SIZE);
 	}
 	return dis;
 }
 
-void printBoard(int board[16])
+void printBoard(int *board)
 {
 	for (int i = 0; i < 16; i++)
 	{
@@ -167,16 +176,18 @@ std::string intBoardToArray(int *board)
 }
 
 // recussive
-int dfs_r(std::stack<Node*> &stack, int g, int threshold)
+int dfs_r(std::stack<Node*> stack, int g, int threshold)
 {
 	Node *node = stack.top();
 	// Evaluation value h, f() = g + h
+	std::string k = intBoardToArray(node->board);
+	h_map.insert(std::pair<std::string, bool>(k, true));
 	int h = manhattanDistance(node->board);
 	// Pruning
 	int f = g + h;
 	if (f > threshold) return f; // update threshold
-	// Find the final answer
-	if (h == 0) 
+		// Find the final answer
+	if (h == 0)
 	{
 		printPath(node);
 		return FOUND;
@@ -187,15 +198,13 @@ int dfs_r(std::stack<Node*> &stack, int g, int threshold)
 	{
 		if (isLegal(node->pos, i))
 		{
-			Node *child = newNode(node->board, node, node->pos, (node->pos + dir[i]), i, (node->depth + 1));
-			std::string key = intBoardToArray(child->board);
-			//printf("%s\n", key);
-			
+			Node *child = newNode(node->board, node, node->pos, (node->pos + dir[i]), (node->depth + 1));
+			std::string key = intBoardToArray(child->board);			
 			if (h_map.find(key) != h_map.end()) {
 				//printf("HI\n");
+				delete(child);
 				continue;
 			}
-			h_map.insert(std::pair<std::string, bool>(key, true));
 			path.push_back(i);		
 			stack.push(child);			
 			int result = dfs_r(stack, g + 1, threshold) ;			
@@ -203,6 +212,7 @@ int dfs_r(std::stack<Node*> &stack, int g, int threshold)
 			if (result < min) min = result;	
 			path.pop_back();
 			stack.pop();
+			delete(child);
 		}	
 	}
 	return min;
@@ -211,13 +221,15 @@ int dfs_r(std::stack<Node*> &stack, int g, int threshold)
 // g(P) : the number of moves made so far.
 bool idaStar(int pos)
 {
-	Node *root = newNode(puzzle, NULL, pos, pos, NULL, 0);
+	Node *root = newNode(puzzle, NULL, pos, pos, 0);
 	int threshold = manhattanDistance(root->board);
 	std::stack<Node*> stack;
 	stack.push(root);
 	while (true)
 	{
 		h_map.clear();
+		//std::string key = intBoardToArray(root->board);
+		//h_map.insert(std::pair<std::string, bool>(key, true));
 		int result = dfs_r(stack, 0, threshold);
 		if (result == FOUND) return true;
 		if (result == INT_MAX) {
@@ -229,7 +241,7 @@ bool idaStar(int pos)
 	return false;
 }
 
-bool isSolvable(int board[16], int pos) {
+bool isSolvable(int *board, int pos) {
 	
 	int count = 0;
 	for (int i = 0; i < 15; i++) {
@@ -245,6 +257,7 @@ int main()
 {
 	srand(time(NULL));
 	RandomPuzzle();	
+	getBoardPosition(puzzle);
 	//GenPuzzle();
 	printf("\n");
 
