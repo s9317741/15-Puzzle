@@ -1,11 +1,14 @@
 ﻿#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
+#include <climits>
 #include <vector>
 #include <stack>
 #include <unordered_map>
 #include <string>
 
-#define SWAP(x, y) int tmp = x; x = y; y = tmp;
+#define SWAP(x, y) do { int tmp = x; x = y; y = tmp; } while(0)
 #define SIZE 4
 #define FOUND -1
 
@@ -118,13 +121,13 @@ void getBoardPosition(int *board)
 int manhattanDistance(int *board)
 {
 	int dis = 0;
-	//int *getPos = getBoardPosition(board);
-	//int *getPos1 = getBoardPosition(finalAnswer);
 	for (int i = 0; i < 16; i++)
 	{
 		if (board[i] == 0)
 			continue;
-		dis += abs(board[i] / SIZE - finalAnswer[i] / SIZE ) + abs(board[i] % SIZE - finalAnswer[i] % SIZE);
+		// board[i] 的目標位置是 board[i]-1 (因為 tile 1 應在 index 0, tile 2 在 index 1, ...)
+		int goalPos = board[i] - 1;
+		dis += abs(i / SIZE - goalPos / SIZE) + abs(i % SIZE - goalPos % SIZE);
 	}
 	return dis;
 }
@@ -153,6 +156,7 @@ int FindBlankPos(int *board)
 	for (int i = 0; i < 16; i++)
 		if (board[i] == 0)
 			return i;
+	return -1;
 }
 
 // UP:0, DOWN:1, left:2, right:3
@@ -170,13 +174,14 @@ std::string intBoardToArray(int *board)
 	std::string a;
 	for (int i = 0; i < 16; i++)
 	{
-		a += board[i]+'0';
+		a += std::to_string(board[i]);
+		a += ',';
 	}
 	return a;
 }
 
 // recussive
-int dfs_r(std::stack<Node*> stack, int g, int threshold)
+int dfs_r(std::stack<Node*> &stack, int g, int threshold)
 {
 	Node *node = stack.top();
 	// Evaluation value h, f() = g + h
@@ -211,6 +216,8 @@ int dfs_r(std::stack<Node*> stack, int g, int threshold)
 			if (result == FOUND) return FOUND;
 			if (result < min) min = result;	
 			path.pop_back();
+			std::string childKey = intBoardToArray(child->board);
+			h_map.erase(childKey);
 			stack.pop();
 			delete(child);
 		}	
